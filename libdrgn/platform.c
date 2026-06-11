@@ -9,6 +9,12 @@
 #include "error.h"
 #include "platform.h"
 
+// EM_LOONGARCH was added in glibc 2.34 / binutils 2.36. Define it as a fallback
+// for older toolchains.
+#ifndef EM_LOONGARCH
+#define EM_LOONGARCH 258
+#endif
+
 const struct drgn_register *drgn_register_by_name_unknown(const char *name)
 {
 	return NULL;
@@ -44,6 +50,8 @@ LIBDRGN_PUBLIC const struct drgn_platform drgn_host_platform = {
 // __s390__ is also defined for s390x, so the order is important.
 #elif __s390__
 	.arch = &arch_info_s390,
+#elif defined(__loongarch__) && __loongarch_grlen == 64
+	.arch = &arch_info_loongarch64,
 #else
 	.arch = &arch_info_unknown,
 #endif
@@ -88,6 +96,9 @@ drgn_platform_create(enum drgn_architecture arch,
 		break;
 	case DRGN_ARCH_S390:
 		arch_info = &arch_info_s390;
+		break;
+	case DRGN_ARCH_LOONGARCH64:
+		arch_info = &arch_info_loongarch64;
 		break;
 	default:
 		return drgn_error_create(DRGN_ERROR_INVALID_ARGUMENT,
@@ -179,6 +190,12 @@ void drgn_platform_from_elf(GElf_Ehdr *ehdr, struct drgn_platform *ret)
 			arch = &arch_info_s390x;
 		else
 			arch = &arch_info_s390;
+		break;
+	case EM_LOONGARCH:
+		if (ehdr->e_ident[EI_CLASS] == ELFCLASS64)
+			arch = &arch_info_loongarch64;
+		else
+			arch = &arch_info_unknown;
 		break;
 	default:
 		arch = &arch_info_unknown;

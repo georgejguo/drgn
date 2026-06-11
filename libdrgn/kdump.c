@@ -46,6 +46,10 @@ static struct drgn_error *drgn_platform_from_kdump(kdump_ctx_t *ctx,
 	else if (strcmp(str, KDUMP_ARCH_RISCV32) == 0)
 		arch = &arch_info_riscv32;
 #endif
+#ifdef KDUMP_ARCH_LOONGARCH64
+	else if (strcmp(str, KDUMP_ARCH_LOONGARCH64) == 0)
+		arch = &arch_info_loongarch64;
+#endif
 	else
 		arch = &arch_info_unknown;
 
